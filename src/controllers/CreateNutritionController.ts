@@ -1,12 +1,12 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { CreateNutritionService } from "../services/CreateNutritionService";
-interface DataProps {
+export interface DataProps {
   name: string;
   email: string;
   password: string;
-  age: number;
-  weight: number;
-  height: number;
+  age: string;
+  weight: string;
+  height: string;
   gender: string;
   level: string;
   objective: string;
@@ -29,7 +29,17 @@ class CreateNutritionController {
     console.log("Rota foi chamada!");
 
     const createNutritionService = new CreateNutritionService();
-    const result = await createNutritionService.execute();
+    const result = await createNutritionService.execute({
+      name,
+      email,
+      password,
+      age,
+      weight,
+      height,
+      gender,
+      level,
+      objective,
+    });
 
     reply.send(result);
   }
