@@ -114,6 +114,8 @@ export async function userRoutes(
     { schema: createUserSchema },
     async (req: FastifyRequest, reply: FastifyReply) => {
       try {
+        // req.body já foi validado pelo schema
+        // @ts-ignore
         const user = await UserModel.create(req.body);
         return reply.status(201).send(user);
       } catch (error: any) {
