@@ -110,16 +110,19 @@ export async function userRoutes(
   );
 
   app.post(
-    "/users",
+    "/users/login",
     { schema: createUserSchema },
     async (req: FastifyRequest, reply: FastifyReply) => {
       try {
         const user = await UserModel.create(req.body);
         return reply.status(201).send(user);
       } catch (error: any) {
+        if (error?.code === 11000) {
+          return reply.status(409).send({ message: "Email já cadastrado" });
+        }
         return reply
           .status(500)
-          .send(`Erro ao cadastrar usuário: ${error.message}`);
+          .send({ message: `Erro ao cadastrar usuário: ${error.message}` });
       }
     }
   );
