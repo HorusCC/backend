@@ -5,12 +5,26 @@ import {
   FastifyReply,
 } from "fastify";
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 const UserModel = require(".././models/user.model.js");
 
 function isObjectId(id: string) {
   return mongoose.Types.ObjectId.isValid(id);
 }
+
+// schema só para LOGIN
+const loginSchema = {
+  body: {
+    type: "object",
+    properties: {
+      email: { type: "string", format: "email" },
+      password: { type: "string", minLength: 1 },
+    },
+    required: ["email", "password"],
+    additionalProperties: false,
+  },
+};
 
 const GENDERS = ["masculino", "feminino"] as const;
 const ACTIVITY_LEVELS = [
@@ -78,6 +92,7 @@ export async function userRoutes(
   app: FastifyInstance,
   _opts: FastifyPluginOptions
 ) {
+  // LISTAR TODOS
   app.get("/users", async (_req: FastifyRequest, reply: FastifyReply) => {
     try {
       const users = await UserModel.find({}).lean();
@@ -89,6 +104,7 @@ export async function userRoutes(
     }
   });
 
+  // BUSCAR POR ID
   app.get<{ Params: { id: string } }>(
     "/users/:id",
     { schema: idParamSchema },
@@ -109,8 +125,46 @@ export async function userRoutes(
     }
   );
 
+  // LOGIN (não cria usuário; só autentica)
   app.post(
     "/users/login",
+    { schema: loginSchema },
+    async (req: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { email, password } = req.body as {
+          email: string;
+          password: string;
+        };
+
+        // password tem select:false no model → forçar a seleção
+        const user: any = await UserModel.findOne({ email }).select(
+          "+password"
+        );
+        if (!user)
+          return reply.status(401).send({ message: "Credenciais inválidas" });
+
+        const isHashed =
+          typeof user.password === "string" && user.password.startsWith("$2");
+        const ok = isHashed
+          ? await bcrypt.compare(password, user.password)
+          : password === user.password;
+
+        if (!ok)
+          return reply.status(401).send({ message: "Credenciais inválidas" });
+
+        const { password: _p, ...safe } = user.toObject();
+        return reply.status(200).send({ user: safe });
+      } catch (error: any) {
+        return reply
+          .status(500)
+          .send({ message: `Erro no login: ${error.message}` });
+      }
+    }
+  );
+
+  // CRIAR (cadastro)
+  app.post(
+    "/users",
     { schema: createUserSchema },
     async (req: FastifyRequest, reply: FastifyReply) => {
       try {
@@ -127,6 +181,7 @@ export async function userRoutes(
     }
   );
 
+  // ATUALIZAR
   app.patch<{ Params: { id: string } }>(
     "/users/:id",
     { schema: updateUserSchema },
@@ -150,6 +205,7 @@ export async function userRoutes(
     }
   );
 
+  // DELETAR
   app.delete<{ Params: { id: string } }>(
     "/users/:id",
     { schema: idParamSchema },
