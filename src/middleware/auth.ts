@@ -1,18 +1,21 @@
-import type { FastifyRequest, FastifyReply } from "fastify";
-
-const API_TOKEN = process.env.API_TOKEN || "";
+import { FastifyReply, FastifyRequest } from "fastify";
 
 export async function bearerAuth(req: FastifyRequest, reply: FastifyReply) {
-  // libera preflight/CORS e health
-  if (req.method === "OPTIONS" || req.url.startsWith("/health")) return;
+  const header = req.headers["authorization"];
+  const token = header?.startsWith("Bearer ") ? header.slice(7) : undefined;
 
-  const auth = req.headers.authorization || "";
-  if (!auth.startsWith("Bearer ")) {
-    return reply.code(401).send({ error: "Missing or invalid Authorization header" });
+  if (!token) {
+    return reply.status(401).send({ error: "Missing bearer token" });
   }
 
-  const token = auth.slice("Bearer ".length);
-  if (!API_TOKEN || token !== API_TOKEN) {
-    return reply.code(401).send({ error: "Invalid token" });
+  const expected = process.env.API_TOKEN;
+  if (!expected) {
+    // se esquecer de setar o token no .env, trate como bloqueado
+    req.log.warn("[auth] API_TOKEN não definido");
+    return reply.status(500).send({ error: "Auth misconfigured" });
+  }
+
+  if (token !== expected) {
+    return reply.status(403).send({ error: "Invalid token" });
   }
 }
