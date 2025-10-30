@@ -5,7 +5,7 @@ import fastify, {
   FastifyReply,
 } from "fastify";
 
-import { CreateNutritionController } from "../controllers/CreateNutritionController";
+import { CreateNutritionController } from "../controllers/CreateNutritionController.js";
 
 export async function routes(
   fastify: FastifyInstance,

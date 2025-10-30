@@ -6,14 +6,13 @@ import {
 } from "fastify";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-
-const UserModel = require(".././models/user.model.js");
+import { UserModel } from "../models/user.model.js";
 
 function isObjectId(id: string) {
   return mongoose.Types.ObjectId.isValid(id);
 }
 
-// schema só para LOGIN
+// Schema de validação para LOGIN
 const loginSchema = {
   body: {
     type: "object",
@@ -125,7 +124,7 @@ export async function userRoutes(
     }
   );
 
-  // LOGIN (não cria usuário; só autentica)
+  // LOGIN
   app.post(
     "/users/login",
     { schema: loginSchema },
@@ -136,10 +135,7 @@ export async function userRoutes(
           password: string;
         };
 
-        // password tem select:false no model → forçar a seleção
-        const user: any = await UserModel.findOne({ email }).select(
-          "+password"
-        );
+        const user: any = await UserModel.findOne({ email }).select("+password");
         if (!user)
           return reply.status(401).send({ message: "Credenciais inválidas" });
 
@@ -168,8 +164,6 @@ export async function userRoutes(
     { schema: createUserSchema },
     async (req: FastifyRequest, reply: FastifyReply) => {
       try {
-        // req.body já foi validado pelo schema
-        // @ts-ignore
         const user = await UserModel.create(req.body);
         return reply.status(201).send(user);
       } catch (error: any) {
@@ -192,7 +186,10 @@ export async function userRoutes(
         const { id } = req.params;
         if (!isObjectId(id)) return reply.status(400).send("ID inválido");
 
-        const user = await UserModel.findByIdAndUpdate(id, req.body, {
+        // 👇 Tipagem corrigida para resolver o erro TS2769
+        const body = req.body as Partial<typeof UserModel.schema.obj>;
+
+        const user = await UserModel.findByIdAndUpdate(id, body, {
           new: true,
           runValidators: true,
         });

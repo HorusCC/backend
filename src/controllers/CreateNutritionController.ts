@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { CreateNutritionService } from "../services/CreateNutritionService";
+import { CreateNutritionService } from "../services/CreateNutritionService.js";
 export interface DataProps {
   name: string;
   email: string;

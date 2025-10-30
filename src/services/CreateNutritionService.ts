@@ -1,4 +1,4 @@
-import { DataProps } from "../controllers/CreateNutritionController";
+import { DataProps } from "../controllers/CreateNutritionController.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 class CreateNutritionService {
