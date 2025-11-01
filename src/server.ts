@@ -21,28 +21,31 @@ const MONGODB_URI = process.env.MONGODB_URI;
 app.get("/health", async () => ({ ok: true }));
 
 /**
- * Auth global — mas liberando:
- * - OPTIONS (preflight CORS)
- * - /health
- * - POST /api/users/login (não tem token ainda)
+ * Auth global — libera OPTIONS, /health, login e cadastro.
+ * Normaliza URL (remove query e barra final) pra evitar falsos bloqueios.
  */
 app.addHook("onRequest", async (req, reply) => {
   if (req.method === "OPTIONS") return;
   if (req.url === "/health") return;
-  if (req.method === "POST" && req.url === "/api/users/login") return;
+
+  const url = req.url.split("?")[0].replace(/\/+$/, "");
+
+  // libera login e cadastro SEM token
+  if (req.method === "POST" && (url === "/api/users/login" || url === "/api/users")) {
+    return;
+  }
+
   return bearerAuth(req, reply);
 });
 
 async function start() {
   try {
-    // CORS
     await app.register(cors, {
       origin: CORS_ORIGIN,
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization"],
     });
 
-    // Mongo
     if (!MONGODB_URI) {
       app.log.warn("⚠️  MONGODB_URI não definido. Continuando sem MongoDB.");
     } else {
@@ -50,12 +53,10 @@ async function start() {
       app.log.info("[mongo] connected");
     }
 
-    // Rotas
     await app.register(routesIA, { prefix: "/ai" });
     await app.register(userRoutes, { prefix: "/api" });
     await app.register(metricsRoutes, { prefix: "/metrics" });
 
-    // Start
     await app.listen({ port: PORT, host: HOST });
 
     const base = `http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`;
