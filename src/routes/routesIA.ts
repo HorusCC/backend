@@ -5,7 +5,7 @@ import fastify, {
   FastifyReply,
 } from "fastify";
 
-import { CreateNutritionController } from "./controllers/CreateNutritionController";
+import { CreateNutritionController } from "../controllers/CreateNutritionController";
 
 export async function routes(
   fastify: FastifyInstance,
@@ -21,7 +21,7 @@ export async function routes(
         .replace(/```/g, "")
         .trim();
 
-      jsonObject = JSON.parse(jsonString);
+      const jsonObject = JSON.parse(jsonString);
 
       return reply.send({ data: jsonObject });
     } catch (error) {
