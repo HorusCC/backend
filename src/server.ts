@@ -24,8 +24,10 @@ const start = async () => {
   app.register(routesIA, { prefix: "/ai" });
   app.register(userRoutes, { prefix: "/api" });
 
-  await app.listen({ port: 8080, host: "0.0.0.0" });
-  console.log("🚀 http://localhost:8080");
+  const PORT = Number(process.env.PORT) || 8080;
+
+  await app.listen({ port: PORT, host: "0.0.0.0" });
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
 };
 
 start();
