@@ -6,6 +6,8 @@ import {
 } from "fastify";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
+import nodemailer from "nodemailer";
 
 const UserModel = require(".././models/user.model.js");
 
@@ -225,16 +227,52 @@ export async function userRoutes(
     async (req, reply) => {
       try {
         const { email } = req.body as { email: string };
-
-        console.log("📩 Pedido de recuperação de senha para:", email);
-
         const emailClean = email.trim().toLowerCase();
+
         const user = await UserModel.findOne({ email: emailClean });
+
+        if (!user) {
+          return reply.status(200).send({
+            message:
+              "Se o email existir em nossa base, enviamos um link de redefinição.",
+          });
+        }
+
+        const token = crypto.randomBytes(32).toString("hex");
+        user.resetToken = token;
+        user.resetTokenExpires = Date.now() + 3600000; // 1 hora
+        await user.save();
+
+        // 🔹 Criar transportador de email
+        const transporter = nodemailer.createTransport({
+          service: "gmail", // ou outro SMTP
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+        });
+
+        const resetLink = `https://seuapp.com/reset-password?token=${token}`;
+
+        // 🔹 Enviar email
+        await transporter.sendMail({
+          from: '"Horus Nutrition" <no-reply@horus.com>',
+          to: emailClean,
+          subject: "Redefinição de senha - Horus Nutrition",
+          html: `
+        <h2>Redefinição de Senha</h2>
+        <p>Você solicitou redefinir sua senha. Clique no link abaixo para criar uma nova:</p>
+        <a href="${resetLink}">Redefinir Senha</a>
+        <p>Esse link expira em 1 hora.</p>
+      `,
+        });
+
         return reply.status(200).send({
           message:
             "Se o email existir em nossa base, enviamos um link de redefinição.",
         });
       } catch (error: any) {
+        console.error("Erro no forgot-password:", error);
         return reply.status(500).send({
           message: `Erro ao solicitar recuperação de senha: ${error.message}`,
         });

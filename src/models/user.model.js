@@ -17,6 +17,8 @@ const userSchema = new mongoose.Schema(
     age: { type: Number, required: true, min: 0 },
     weight: { type: Number, required: true, min: 0 },
     height: { type: Number, required: true, min: 0 },
+    resetToken: { type: String },
+    resetTokenExpires: { type: Date },
 
     email: {
       type: String,

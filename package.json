@@ -19,6 +19,7 @@
     "dotenv": "^17.2.3",
     "fastify": "^5.6.0",
     "mongoose": "^8.19.1",
+    "nodemailer": "^7.0.10",
     "tsx": "^4.20.5"
   },
   "devDependencies": {
