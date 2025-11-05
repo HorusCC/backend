@@ -13,6 +13,20 @@ function isObjectId(id: string) {
   return mongoose.Types.ObjectId.isValid(id);
 }
 
+const forgotSchema = {
+  body: {
+    type: "object",
+    properties: {
+      email: {
+        type: "string",
+        format: "email",
+      },
+    },
+    required: ["email"],
+    additionalProperties: false,
+  },
+};
+
 // schema só para LOGIN
 const loginSchema = {
   body: {
@@ -201,6 +215,26 @@ export async function userRoutes(
         return reply
           .status(500)
           .send(`Erro ao atualizar usuário: ${error.message}`);
+      }
+    }
+  );
+
+  app.post(
+    "/users/forgot-password",
+    { schema: forgotSchema },
+    async (req, reply) => {
+      try {
+        const { email } = req.body as { email: string };
+        const emailClean = email.trim().toLowerCase();
+        const user = await UserModel.findOne({ email: emailClean });
+        return reply.status(200).send({
+          message:
+            "Se o email existir em nossa base, enviamos um link de redefinição.",
+        });
+      } catch (error: any) {
+        return reply.status(500).send({
+          message: `Erro ao solicitar recuperação de senha: ${error.message}`,
+        });
       }
     }
   );
