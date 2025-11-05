@@ -225,6 +225,9 @@ export async function userRoutes(
     async (req, reply) => {
       try {
         const { email } = req.body as { email: string };
+
+        console.log("📩 Pedido de recuperação de senha para:", email);
+
         const emailClean = email.trim().toLowerCase();
         const user = await UserModel.findOne({ email: emailClean });
         return reply.status(200).send({
