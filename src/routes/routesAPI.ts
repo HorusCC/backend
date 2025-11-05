@@ -252,7 +252,10 @@ export async function userRoutes(
           },
         });
 
-        const resetLink = `https://seuapp.com/reset-password?token=${token}`;
+        const baseUrl =
+          process.env.FRONTEND_URL ?? "https://backendtcc-iikl.onrender.com";
+
+        const resetLink = `${baseUrl}/api/reset-password?token=${token}`;
 
         // 🔹 Enviar email
         await transporter.sendMail({
