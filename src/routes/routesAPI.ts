@@ -15,6 +15,18 @@ function isObjectId(id: string) {
   return mongoose.Types.ObjectId.isValid(id);
 }
 
+const resetPasswordSchema = {
+  body: {
+    type: "object",
+    properties: {
+      token: { type: "string", minLength: 10 },
+      password: { type: "string", minLength: 6 },
+    },
+    required: ["token", "password"],
+    additionalProperties: false,
+  },
+};
+
 const forgotSchema = {
   body: {
     type: "object",
@@ -255,7 +267,7 @@ export async function userRoutes(
         const baseUrl =
           process.env.FRONTEND_URL ?? "https://backendtcc-iikl.onrender.com";
 
-        const resetLink = `${baseUrl}/api/reset-password?token=${token}`;
+        const resetLink = `https://backendtcc-iikl.onrender.com/api/reset-password?token=${token}`;
 
         // 🔹 Enviar email
         await transporter.sendMail({
@@ -278,6 +290,223 @@ export async function userRoutes(
         console.error("Erro no forgot-password:", error);
         return reply.status(500).send({
           message: `Erro ao solicitar recuperação de senha: ${error.message}`,
+        });
+      }
+    }
+  );
+
+  app.get("/reset-password", async (req, reply) => {
+    const { token } = req.query as { token?: string };
+
+    if (!token) {
+      reply.header("content-type", "text/html; charset=utf-8");
+      return reply.send(`
+          <!DOCTYPE html>
+          <html lang="pt-BR">
+            <head>
+              <meta charset="UTF-8" />
+              <title>Token inválido</title>
+            </head>
+            <body style="font-family: sans-serif; background:#111; color:#fff; text-align:center; padding:40px;">
+              <h1>Link inválido</h1>
+              <p>O link de redefinição é inválido ou está faltando o token.</p>
+            </body>
+          </html>
+        `);
+    }
+
+    reply.header("content-type", "text/html; charset=utf-8");
+    return reply.send(`
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8" />
+        <title>Redefinir senha - Horus</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <style>
+          body {
+            margin: 0;
+            padding: 0;
+            background: #00060E;
+            color: #fff;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+          }
+          .card {
+            background: #111827;
+            padding: 24px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+          }
+          h1 {
+            font-size: 22px;
+            margin-bottom: 16px;
+            text-align: center;
+          }
+          label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+          }
+          input {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #4B5563;
+            margin-bottom: 12px;
+            font-size: 16px;
+          }
+          button {
+            width: 100%;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            background: #0057C9;
+            color: #fff;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+          }
+          button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+          }
+          .message {
+            margin-top: 12px;
+            font-size: 14px;
+            text-align: center;
+          }
+          .app-link {
+            margin-top: 16px;
+            text-align: center;
+          }
+          .app-link a {
+            color: #60A5FA;
+            text-decoration: none;
+            font-weight: 600;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h1>Redefinir senha</h1>
+          <p style="font-size:14px;margin-bottom:16px;">Digite sua nova senha abaixo.</p>
+          <label for="password">Nova senha</label>
+          <input id="password" type="password" placeholder="Nova senha" />
+          <label for="confirm">Confirmar senha</label>
+          <input id="confirm" type="password" placeholder="Confirmar senha" />
+          <button id="btn">Salvar nova senha</button>
+          <div class="message" id="msg"></div>
+          <div class="app-link" id="appLink" style="display:none;">
+            <a href="horus://login">Abrir app Horus</a>
+          </div>
+        </div>
+
+        <script>
+          const params = new URLSearchParams(window.location.search);
+          const token = params.get("token");
+          const btn = document.getElementById("btn");
+          const msg = document.getElementById("msg");
+          const appLink = document.getElementById("appLink");
+
+          if (!token) {
+            msg.textContent = "Token inválido.";
+            btn.disabled = true;
+          }
+
+          btn.addEventListener("click", async () => {
+            const pass = (document.getElementById("password")).value;
+            const confirm = (document.getElementById("confirm")).value;
+
+            if (!pass || !confirm) {
+              msg.textContent = "Preencha todos os campos.";
+              msg.style.color = "#FBBF24";
+              return;
+            }
+            if (pass !== confirm) {
+              msg.textContent = "As senhas não conferem.";
+              msg.style.color = "#F87171";
+              return;
+            }
+            if (pass.length < 6) {
+              msg.textContent = "A senha deve ter pelo menos 6 caracteres.";
+              msg.style.color = "#FBBF24";
+              return;
+            }
+
+            btn.disabled = true;
+            msg.textContent = "Enviando...";
+            msg.style.color = "#9CA3AF";
+
+            try {
+              const resp = await fetch("/api/users/reset-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ token, password: pass })
+              });
+
+              const data = await resp.json();
+              if (!resp.ok) {
+                msg.textContent = data.message || "Erro ao redefinir senha.";
+                msg.style.color = "#F87171";
+                btn.disabled = false;
+                return;
+              }
+
+              msg.textContent = data.message || "Senha redefinida com sucesso!";
+              msg.style.color = "#10B981";
+              appLink.style.display = "block";
+            } catch (e) {
+              msg.textContent = "Erro de conexão. Tente novamente.";
+              msg.style.color = "#F87171";
+              btn.disabled = false;
+            }
+          });
+        </script>
+      </body>
+    </html>
+      `);
+  });
+
+  app.post(
+    "/users/reset-password",
+    { schema: resetPasswordSchema },
+    async (req, reply) => {
+      try {
+        const { token, password } = req.body as {
+          token: string;
+          password: string;
+        };
+
+        const user: any = await UserModel.findOne({
+          resetToken: token,
+          resetExpires: { $gt: Date.now() },
+        });
+
+        if (!user) {
+          return reply
+            .status(400)
+            .send({ message: "Token inválido ou expirado" });
+        }
+
+        // aqui você pode usar bcrypt se quiser hashear
+        user.password = password;
+        user.resetToken = undefined;
+        user.resetExpires = undefined;
+
+        await user.save();
+
+        return reply
+          .status(200)
+          .send({ message: "Senha redefinida com sucesso" });
+      } catch (error: any) {
+        return reply.status(500).send({
+          message: `Erro ao redefinir senha: ${error.message}`,
         });
       }
     }
