@@ -402,9 +402,6 @@ export async function userRoutes(
           <input id="confirm" type="password" placeholder="Confirmar senha" />
           <button id="btn">Salvar nova senha</button>
           <div class="message" id="msg"></div>
-          <div class="app-link" id="appLink" style="display:none;">
-            <a href="horus://login">Abrir app Horus</a>
-          </div>
         </div>
 
         <script>
