@@ -354,7 +354,7 @@ export async function userRoutes(
             font-size: 14px;
           }
           input {
-            width: 100%;
+            width: 90%;
             padding: 10px 12px;
             border-radius: 8px;
             border: 1px solid #4B5563;
