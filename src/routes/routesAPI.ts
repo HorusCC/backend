@@ -485,7 +485,7 @@ export async function userRoutes(
 
         const user: any = await UserModel.findOne({
           resetToken: token,
-          resetExpires: { $gt: Date.now() },
+          resetTokenExpires: { $gt: Date.now() },
         });
 
         if (!user) {
@@ -493,6 +493,12 @@ export async function userRoutes(
             .status(400)
             .send({ message: "Token inválido ou expirado" });
         }
+
+        user.password = password;
+        user.resetToken = undefined;
+        user.resetTokenExpires = undefined;
+
+        await user.save();
 
         // aqui você pode usar bcrypt se quiser hashear
         user.password = password;
