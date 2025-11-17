@@ -30,7 +30,7 @@ const start = async () => {
 
   // ✅ NOVO: rotas do smartwatch, também em /api
   // Resultado final: GET /api/smartwatch/metrics
-  app.register(smartwatchRoutes, { prefix: "/api" });
+  app.register(smartwatchRoutes, { prefix: "/apiSmartwatch" });
 
   const PORT = Number(process.env.PORT) || 8080;
 
