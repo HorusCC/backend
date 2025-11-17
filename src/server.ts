@@ -7,7 +7,6 @@ const connectDB = require("./database/connect");
 
 import { routes as routesIA } from "./routes/routesIA";
 import { userRoutes } from "./routes/routesAPI";
-import { smartwatchRoutes } from "./routes/routesSmartwatch"; // ✅ NOVO
 
 const app = Fastify({ logger: true });
 
@@ -27,10 +26,6 @@ const start = async () => {
 
   // Suas rotas antigas de API
   app.register(userRoutes, { prefix: "/api" });
-
-  // ✅ NOVO: rotas do smartwatch, também em /api
-  // Resultado final: GET /api/smartwatch/metrics
-  app.register(smartwatchRoutes, { prefix: "/apiSmartwatch" });
 
   const PORT = Number(process.env.PORT) || 8080;
 
