@@ -1,8 +1,9 @@
 import { Schema, model } from "mongoose";
 
 export interface DailyMetricDoc {
-  date: string; // YYYY-MM-DD (ISO local date)
-  calories: number; // kcal gastas no dia (watch)
+  date: string; // YYYY-MM-DD
+  calories: number; // kcal gastas
+  steps: number; // passos do dia
 }
 
 const DailyMetricSchema = new Schema<DailyMetricDoc>(
@@ -14,6 +15,7 @@ const DailyMetricSchema = new Schema<DailyMetricDoc>(
       match: /^\d{4}-\d{2}-\d{2}$/,
     },
     calories: { type: Number, required: true, min: 0, default: 0 },
+    steps: { type: Number, required: true, min: 0, default: 0 },
   },
   {
     collection: "daily_metrics",
