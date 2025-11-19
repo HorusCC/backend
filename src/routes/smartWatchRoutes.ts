@@ -2,11 +2,12 @@ import { FastifyInstance } from "fastify";
 import { getTodayGoogleFitMetrics } from "../services/googleFitService";
 
 export async function smartwatchRoutes(app: FastifyInstance) {
-  app.get("/smartwatch/metrics", async (_request, reply) => {
+  app.get("/metrics", async (_request, reply) => {
     try {
       const metrics = await getTodayGoogleFitMetrics();
 
       return reply.send({
+        ok: true,
         steps: metrics.steps,
         calories: metrics.calories,
       });
