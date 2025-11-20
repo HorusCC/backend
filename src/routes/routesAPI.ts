@@ -233,7 +233,6 @@ export async function userRoutes(
     }
   );
 
-  // 🔹 Esqueci a senha (envio do email)
   app.post(
     "/users/forgot-password",
     { schema: forgotSchema },
@@ -256,8 +255,9 @@ export async function userRoutes(
         user.resetTokenExpires = Date.now() + 3600000; // 1 hora
         await user.save();
 
+        // 🔹 Criar transportador de email
         const transporter = nodemailer.createTransport({
-          service: "gmail",
+          service: "gmail", // ou outro SMTP
           auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
@@ -267,18 +267,19 @@ export async function userRoutes(
         const baseUrl =
           process.env.FRONTEND_URL ?? "https://backendtcc-iikl.onrender.com";
 
-        const resetLink = `${baseUrl}/api/reset-password?token=${token}`;
+        const resetLink = `https://backendtcc-iikl.onrender.com/api/reset-password?token=${token}`;
 
+        // 🔹 Enviar email
         await transporter.sendMail({
           from: '"Horus Nutrition" <no-reply@horus.com>',
           to: emailClean,
           subject: "Redefinição de senha - Horus Nutrition",
           html: `
-          <h2>Redefinição de Senha</h2>
-          <p>Você solicitou redefinir sua senha. Clique no link abaixo para criar uma nova:</p>
-          <a href="${resetLink}">Redefinir Senha</a>
-          <p>Esse link expira em 1 hora.</p>
-        `,
+        <h2>Redefinição de Senha</h2>
+        <p>Você solicitou redefinir sua senha. Clique no link abaixo para criar uma nova:</p>
+        <a href="${resetLink}">Redefinir Senha</a>
+        <p>Esse link expira em 1 hora.</p>
+      `,
         });
 
         return reply.status(200).send({
@@ -294,25 +295,24 @@ export async function userRoutes(
     }
   );
 
-  // 🔹 Página HTML de redefinição de senha (aberta pelo link do email)
   app.get("/reset-password", async (req, reply) => {
     const { token } = req.query as { token?: string };
 
     if (!token) {
       reply.header("content-type", "text/html; charset=utf-8");
       return reply.send(`
-      <!DOCTYPE html>
-      <html lang="pt-BR">
-        <head>
-          <meta charset="UTF-8" />
-          <title>Token inválido</title>
-        </head>
-        <body style="font-family: sans-serif; background:#111; color:#fff; text-align:center; padding:40px;">
-          <h1>Link inválido</h1>
-          <p>O link de redefinição é inválido ou está faltando o token.</p>
-        </body>
-      </html>
-    `);
+          <!DOCTYPE html>
+          <html lang="pt-BR">
+            <head>
+              <meta charset="UTF-8" />
+              <title>Token inválido</title>
+            </head>
+            <body style="font-family: sans-serif; background:#111; color:#fff; text-align:center; padding:40px;">
+              <h1>Link inválido</h1>
+              <p>O link de redefinição é inválido ou está faltando o token.</p>
+            </body>
+          </html>
+        `);
     }
 
     reply.header("content-type", "text/html; charset=utf-8");
@@ -402,11 +402,6 @@ export async function userRoutes(
           <input id="confirm" type="password" placeholder="Confirmar senha" />
           <button id="btn">Salvar nova senha</button>
           <div class="message" id="msg"></div>
-
-          <!-- Link opcional para voltar para o app -->
-          <div class="app-link" id="appLink" style="display:none;">
-            <a href="#">Voltar para o app</a>
-          </div>
         </div>
 
         <script>
@@ -415,12 +410,11 @@ export async function userRoutes(
           const btn = document.getElementById("btn");
           const msg = document.getElementById("msg");
           const appLink = document.getElementById("appLink");
-
-          if (!token) {
-            msg.textContent = "Token inválido.";
-            msg.style.color = "#F87171";
-            btn.disabled = true;
-          }
+msg.textContent = data.message || "Senha redefinida com sucesso!";
+msg.style.color = "#10B981";
+if (appLink) {
+  appLink.style.display = "block";
+}
 
           btn.addEventListener("click", async () => {
             const pass = (document.getElementById("password")).value;
@@ -454,7 +448,6 @@ export async function userRoutes(
               });
 
               const data = await resp.json();
-
               if (!resp.ok) {
                 msg.textContent = data.message || "Erro ao redefinir senha.";
                 msg.style.color = "#F87171";
@@ -464,11 +457,7 @@ export async function userRoutes(
 
               msg.textContent = data.message || "Senha redefinida com sucesso!";
               msg.style.color = "#10B981";
-
-              // só mostra o link se ele existir
-              if (appLink) {
-                appLink.style.display = "block";
-              }
+              appLink.style.display = "block";
             } catch (e) {
               msg.textContent = "Erro de conexão. Tente novamente.";
               msg.style.color = "#F87171";
@@ -478,10 +467,9 @@ export async function userRoutes(
         </script>
       </body>
     </html>
-  `);
+      `);
   });
 
-  // 🔹 Rota que realmente troca a senha
   app.post(
     "/users/reset-password",
     { schema: resetPasswordSchema },
@@ -503,18 +491,23 @@ export async function userRoutes(
             .send({ message: "Token inválido ou expirado" });
         }
 
-        // aqui você pode usar bcrypt se quiser hashear a senha
         user.password = password;
         user.resetToken = undefined;
         user.resetTokenExpires = undefined;
 
         await user.save();
 
+        // aqui você pode usar bcrypt se quiser hashear
+        user.password = password;
+        user.resetToken = undefined;
+        user.resetExpires = undefined;
+
+        await user.save();
+
         return reply
           .status(200)
-          .send({ message: "Senha redefinida com sucesso!" });
+          .send({ message: "Senha redefinida com sucesso" });
       } catch (error: any) {
-        console.error("Erro no reset-password:", error);
         return reply.status(500).send({
           message: `Erro ao redefinir senha: ${error.message}`,
         });
