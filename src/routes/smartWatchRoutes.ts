@@ -1,3 +1,4 @@
+// src/routes/smartWatchRoutes.ts
 import { FastifyInstance } from "fastify";
 import { getTodayGoogleFitMetrics } from "../services/googleFitService";
 
@@ -9,7 +10,9 @@ export async function smartwatchRoutes(app: FastifyInstance) {
       return reply.send({
         ok: true,
         steps: metrics.steps,
-        calories: metrics.calories,
+        calories: metrics.calories, // TOTAL
+        caloriesActive: metrics.caloriesActive,
+        caloriesBmr: metrics.caloriesBmr,
       });
     } catch (error: any) {
       console.error(
