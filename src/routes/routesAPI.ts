@@ -409,12 +409,16 @@ export async function userRoutes(
           const token = params.get("token");
           const btn = document.getElementById("btn");
           const msg = document.getElementById("msg");
-          const appLink = document.getElementById("appLink");
 
-          if (!token) {
-            msg.textContent = "Token inválido.";
-            btn.disabled = true;
-          }
+         if (!resp.ok) {
+  msg.textContent = data.message || "Erro ao redefinir senha.";
+  msg.style.color = "#F87171";
+  btn.disabled = false;
+  return;
+}
+
+msg.textContent = data.message || "Senha redefinida com sucesso!";
+msg.style.color = "#10B981";
 
           btn.addEventListener("click", async () => {
             const pass = (document.getElementById("password")).value;
