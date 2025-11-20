@@ -12,15 +12,13 @@ export async function smartwatchRoutes(app: FastifyInstance) {
         calories: metrics.calories,
       });
     } catch (error: any) {
-      const detail =
-        error?.response?.data || error?.message || JSON.stringify(error);
+      console.error(
+        "[Smartwatch] Erro ao buscar métricas:",
+        error?.response?.data || error?.message || error
+      );
 
-      console.error("[Smartwatch] Erro ao buscar métricas:", detail);
-
-      // ⚠️ SÓ PARA DEBUG! depois tira esse "detail" da resposta.
       return reply.status(500).send({
         message: "Erro ao buscar dados do smartwatch",
-        detail,
       });
     }
   });
