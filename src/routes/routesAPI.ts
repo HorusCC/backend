@@ -461,7 +461,6 @@ msg.style.color = "#10B981";
 
               msg.textContent = data.message || "Senha redefinida com sucesso!";
               msg.style.color = "#10B981";
-              appLink.style.display = "block";
             } catch (e) {
               msg.textContent = "Erro de conexão. Tente novamente.";
               msg.style.color = "#F87171";
