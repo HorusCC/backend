@@ -234,6 +234,7 @@ export async function userRoutes(
   );
 
   // 🔹 Esqueci a senha (envio do email)
+  // 🔹 Esqueci a senha (envio do email)
   app.post(
     "/users/forgot-password",
     { schema: forgotSchema },
@@ -267,7 +268,7 @@ export async function userRoutes(
         const baseUrl =
           process.env.FRONTEND_URL ?? "https://backendtcc-iikl.onrender.com";
 
-        const resetLink = `https://backendtcc-iikl.onrender.com/api/reset-password?token=${token}`;
+        const resetLink = `${baseUrl}/api/reset-password?token=${token}`;
 
         await transporter.sendMail({
           from: '"Horus Nutrition" <no-reply@horus.com>',
@@ -414,16 +415,13 @@ export async function userRoutes(
           const token = params.get("token");
           const btn = document.getElementById("btn");
           const msg = document.getElementById("msg");
+          const appLink = document.getElementById("appLink");
 
-if (!resp.ok) {
-  msg.textContent = data.message || "Erro ao redefinir senha.";
-  msg.style.color = "#F87171";
-  btn.disabled = false;
-  return;
-}
-
-msg.textContent = data.message || "Senha redefinida com sucesso!";
-msg.style.color = "#10B981";
+          if (!token) {
+            msg.textContent = "Token inválido.";
+            msg.style.color = "#F87171";
+            btn.disabled = true;
+          }
 
           btn.addEventListener("click", async () => {
             const pass = (document.getElementById("password")).value;
@@ -470,7 +468,7 @@ msg.style.color = "#10B981";
 
               // só mostra o link se ele existir
               if (appLink) {
-
+                appLink.style.display = "block";
               }
             } catch (e) {
               msg.textContent = "Erro de conexão. Tente novamente.";
